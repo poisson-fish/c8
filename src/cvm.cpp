@@ -243,7 +243,7 @@ void CVM::Step(){
 
 }
 CVM::CVM(){
-    vmStack = new uint16_t[16];
+    vmStack = new uint16_t[15];
     vmMemory = new uint8_t[4095];
     vmRegisters = new uint8_t[15];
 }
