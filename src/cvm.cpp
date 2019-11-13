@@ -86,7 +86,7 @@ void CVM::Step(){
                     break;
                 case 0x4: //ADD Vx, Vy
                     {
-                        uint8_t result = vmRegisters[X] + vmRegisters[Y]; //Do addition into a 16 bit bucket
+                        uint16_t result = vmRegisters[X] + vmRegisters[Y]; //Do addition into a 16 bit bucket
                         if((result >> 8) == 0x0){ //Check if overflows 8 bits
                             vmRegisters[0xF] = 0x1; //Set F flag for overflow
                         }
@@ -99,7 +99,7 @@ void CVM::Step(){
                     break;
                 case 0x5: //SUB Vx, Vy
                     {
-                        uint8_t result = (0xFFFF & vmRegisters[X]) - vmRegisters[Y]; //Borrow canary bits AND'd
+                        uint16_t result = (0xFFFF & vmRegisters[X]) - vmRegisters[Y]; //Borrow canary bits AND'd
                         if((result >> 8) != 0xFF){ //Are canary bits untouched?
                             vmRegisters[0xF] = 0x0; //Naw, we had to borrow, set flag to 0
                         }
@@ -122,7 +122,7 @@ void CVM::Step(){
                     break;
                 case 0x7: //SUBN Vx, Vy
                     {
-                        uint8_t result = (0xFFFF & vmRegisters[Y]) - vmRegisters[X]; //Borrow canary bits AND'd
+                        uint16_t result = (0xFFFF & vmRegisters[Y]) - vmRegisters[X]; //Borrow canary bits AND'd
                         if((result >> 8) != 0xFF){ //Are canary bits untouched?
                             vmRegisters[0xF] = 0x0; //Naw, we had to borrow, set flag to 0
                         }
