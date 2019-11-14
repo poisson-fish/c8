@@ -1,28 +1,28 @@
 #include "cvm.h"
 #include "util.h"
 
-#define ADR (((opcode & 0xF) << 4) & lobyte)
-#define X (opcode & 0xF)
-#define Y (lobyte >> 4)
-#define KK (lobyte)
-#define LONIB (lobyte & 0xF)
-
+#define OPCODE (vmMemory[PC])
+#define LOBYTE (vmMemory[PC+1])
+#define ADR (((OPCODE & 0xF) << 4) & LOBYTE)
+#define X (OPCODE & 0xF)
+#define Y (LOBYTE >> 4)
+#define KK (LOBYTE)
+#define LONIB (LOBYTE & 0xF)
 
 void CVM::Step(){
-    uint8_t opcode = vmMemory[PC];
-    uint8_t lobyte = vmMemory[PC+1];
-    switch(opcode >> 4){
+    switch(OPCODE >> 4){
         case 0x0:
-            switch(lobyte){
+            switch(LOBYTE){
                 case 0xE0: //CLS
                     //clearDisplay();
+                    PC+=2;
                     break;
                 case 0xEE: //RET
                     PC = vmStack[SP];
                     SP -= 1;
                     break;
                 default: //SYS
-                    PC++;
+                    PC+=2;
                     break; //Ignored
             }
             break;
@@ -36,53 +36,53 @@ void CVM::Step(){
             break;
         case 0x3: //SE Vx, byte
             if(vmRegisters[X] == KK){
-                PC = PC + 2;
+                PC = PC + 4;
             }
             else{
-                PC++;
+                PC+=2;
             }
             break;
         case 0x4: //SNE Vx, byte
             if(vmRegisters[X] != KK){
-                PC = PC + 2;
+                PC = PC + 4;
             }
             else{
-                PC++;
+                PC+=2;
             }
             break;
         case 0x5: //SE Vx, Vy
             if(vmRegisters[X] == vmRegisters[Y]){
-                PC = PC + 2;
+                PC = PC + 4;
             }
             else{
-                PC++;
+                PC+=2;
             }
             break;
         case 0x6: //LD Vx, byte
             vmRegisters[X] = KK;
-            PC++;
+            PC+=2;
             break;
         case 0x7: //ADD Vx, byte
             vmRegisters[X] = vmRegisters[X] + KK;
-            PC++;
+            PC+=2;
             break;
         case 0x8:
             switch(LONIB){
                 case 0x0: //LD Vx, Vy
                     vmRegisters[X] = vmRegisters[Y];
-                    PC++;
+                    PC+=2;
                     break;
                 case 0x1: //OR Vx, Vy
                     vmRegisters[X] = vmRegisters[X] | vmRegisters[Y];
-                    PC++;
+                    PC+=2;
                     break;
                 case 0x2: //AND Vx, Vy
                     vmRegisters[X] = vmRegisters[X] & vmRegisters[Y];
-                    PC++;
+                    PC+=2;
                     break;
                 case 0x3: //XOR Vx, Vy
                     vmRegisters[X] = vmRegisters[X] ^ vmRegisters[Y];
-                    PC++;
+                    PC+=2;
                     break;
                 case 0x4: //ADD Vx, Vy
                     {
@@ -94,7 +94,7 @@ void CVM::Step(){
                             vmRegisters[0xF] = 0x0;
                         }
                         vmRegisters[X] = (result & 0xFF); //Assign lower byte to register
-                        PC++;
+                        PC+=2;
                     }
                     break;
                 case 0x5: //SUB Vx, Vy
@@ -107,7 +107,7 @@ void CVM::Step(){
                             vmRegisters[0xF] = 0x1; //Clean as a whistle
                         }
                         vmRegisters[X] = (result & 0xFF); //Assign lower byte
-                        PC++;
+                        PC+=2;
                     }
                     break;
                 case 0x6: //SHR Vx {, VY} Note: Originally this opcode meant set VX equal to VY bitshifted right 1 but emulators and software seem to ignore VY now.
@@ -118,7 +118,7 @@ void CVM::Step(){
                         vmRegisters[0xF] = 0x0;
                     }
                     vmRegisters[X] = vmRegisters[X] >> 1;
-                    PC++;
+                    PC+=2;
                     break;
                 case 0x7: //SUBN Vx, Vy
                     {
@@ -130,7 +130,7 @@ void CVM::Step(){
                             vmRegisters[0xF] = 0x1; //Clean as a whistle
                         }
                         vmRegisters[X] = (result & 0xFF); //Assign lower byte
-                        PC++;
+                        PC+=2;
                     }
                     break;
                 case 0xE: //SHL Vx, {Vy} (See earlier note on SHR)
@@ -141,73 +141,69 @@ void CVM::Step(){
                         vmRegisters[0xF] = 0x0;
                     }
                     vmRegisters[X] = vmRegisters[X] << 0x1;
-                    PC++;
+                    PC+=2;
                     break;
                 default:
-                    PC++;
+                    PC+=2;
                     //Invalid Opcode
                     break;
             }
         case 0x9: //SNE Vx, Vy
             if(vmRegisters[X] != vmRegisters[Y]){
-                PC = PC + 0x2;
+                PC = PC + 4;
             }
             else{
-                PC++;
+                PC=PC + 2;
             }
             break;
         case 0xA: //LD I, addr
             I = ADR;
-            PC++;
+            PC+=2;
             break;
         case 0xB: //JP V0, addr
             PC = vmRegisters[0x0] + ADR;
             break;
         case 0xC: //RND Vx, byte
             vmRegisters[X] = ((uint16_t)(rand() % 256)) & KK;
-            PC++;
+            PC+=2;
             break;
         case 0xD: //DRW Vx, Vy, nibble
-            //Not implemented
-            PC++;
+            for(int i = 0;i<=LONIB;i++){
+                
+            } 
+            PC+=2;
             break;
         case 0xE:
-            switch(lobyte){
+            switch(LOBYTE){
                 case 0x9E: //SKP Vx
                     //Not implemented
-                    PC++;
+                    PC+=2;
                     break;
                 case 0xA1: //SKNP Vx
                     //Not implemented
-                    PC++;
+                    PC+=2;
                     break;
             }
             break;
         case 0xF:
-            switch(lobyte){
+            switch(LOBYTE){
                 case 0x07: //LD Vx, DT
                     vmRegisters[X] = DT;
-                    PC++;
                     break;
                 case 0x0A: //LD Vx, K
                     //Not implemented 
-                    PC++;
                     break;
                 case 0x15: //LD DT,Vx
                     DT = vmRegisters[X];
-                    PC++;
                     break;
                 case 0x18: //LD ST, Vx
                     ST = vmRegisters[X];
-                    PC++;
                     break;
                 case 0x1E: //ADD I, Vx
                     I = I + vmRegisters[X];
-                    PC++;
                     break;
                 case 0x29: //LD F, Vx
                     //Not implemented
-                    PC++;
                     break;
                 case 0x33: //LD B, Vx
                     {
@@ -215,40 +211,36 @@ void CVM::Step(){
                         collect_digits(digits,vmRegisters[X]);
                         int i = 0;
                         for(std::vector<uint8_t>::iterator it = digits.begin(); it != digits.end(); it++,i++ ) vmMemory[I + i] = *it;
-                        PC++;
                     }
                     break;
                 case 0x55: //LD [I], Vx
                     {
                         for(int i = 0; i <= X;i++) vmMemory[I + i] = vmRegisters[i];
-                        PC++;
                     }
                     break;
                 case 0x65: //LD Vx, [I]
                     {
-                        for(int i = 0; i <= X;i++)
-                        {
-                            vmRegisters[i] = vmMemory[I + i];
-                        }
-                        PC++;
+                        for(int i = 0; i <= X;i++) vmRegisters[i] = vmMemory[I + i];
                     }
                     break;
                 default:
-                    PC++;
                     //Invalid Opcode
                     break;
             }
-        
+            PC+=2;
+            break;
     }
 
 }
 CVM::CVM(){
-    vmStack = new uint16_t[15];
-    vmMemory = new uint8_t[4095];
-    vmRegisters = new uint8_t[15];
+    vmStack = new uint16_t[STACKSIZE];
+    vmMemory = new uint8_t[MEMSIZE];
+    vmRegisters = new uint8_t[REGISTERCOUNT];
+    (*frameBuffer)[SCREENSIZEX] = new bool[SCREENSIZEY][SCREENSIZEX];
 }
 CVM::~CVM(){
     delete[] vmStack;
     delete[] vmMemory;
     delete[] vmRegisters;
+    delete[] frameBuffer;
 }
