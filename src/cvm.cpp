@@ -14,7 +14,9 @@ void CVM::Step(){
         case 0x0:
             switch(LOBYTE){
                 case 0xE0: //CLS
-                    //clearDisplay();
+                    for(int x = 0;x<=SCREENSIZEX;x++)
+                        for(int y = 0;y<=SCREENSIZEY;y++)
+                            frameBuffer[INDEX(x,y)] = false;
                     PC+=2;
                     break;
                 case 0xEE: //RET
@@ -168,9 +170,14 @@ void CVM::Step(){
             PC+=2;
             break;
         case 0xD: //DRW Vx, Vy, nibble
-            for(int i = 0;i<=LONIB;i++){
-                
-            } 
+            for(int y = 0;y<=LONIB;y=y+1){
+                for(int x = 0;x<=SCREENSIZEX;x++){
+                    uint8_t result = vmMemory[I + y] ^ frameBuffer[INDEX(x,y)];
+                    bool wasCollision = (vmMemory[I+INDEX(x,y)] & frameBuffer[INDEX(x,y)]) > 0;
+
+                    memcpy
+                }
+            }
             PC+=2;
             break;
         case 0xE:
@@ -236,7 +243,7 @@ CVM::CVM(){
     vmStack = new uint16_t[STACKSIZE];
     vmMemory = new uint8_t[MEMSIZE];
     vmRegisters = new uint8_t[REGISTERCOUNT];
-    (*frameBuffer)[SCREENSIZEX] = new bool[SCREENSIZEY][SCREENSIZEX];
+    frameBuffer = new uint8_t[SCREENSIZEX/sizeof(uint8_t) * SCREENSIZEY];
 }
 CVM::~CVM(){
     delete[] vmStack;

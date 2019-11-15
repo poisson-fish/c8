@@ -6,6 +6,7 @@
 #define REGISTERCOUNT 16-1
 #define SCREENSIZEX 64-1
 #define SCREENSIZEY 32-1
+#define INDEX(x,y) (x + (SCREENSIZEX * y))
 
 //For standardized data types
 #include <cstdint>
@@ -23,7 +24,7 @@ class CVM{
     //Memory
     uint16_t* vmStack;//32 bytes stack memory
     uint8_t* vmMemory;//4096 bytes addressible memory
-    bool** frameBuffer;
+    uint8_t* frameBuffer;
 
     //Registers
     uint8_t* vmRegisters;//16 general purpose registers
