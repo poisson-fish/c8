@@ -3,7 +3,7 @@
 
 #define OPCODE (vmMemory[PC])
 #define LOBYTE (vmMemory[PC+1])
-#define ADR (((OPCODE & 0xF) << 4) & LOBYTE)
+#define ADR (((OPCODE & 0xF) << 8) ^ LOBYTE)
 #define X (OPCODE & 0xF)
 #define Y (LOBYTE >> 4)
 #define KK (LOBYTE)
@@ -32,6 +32,7 @@ void CVM::Step(){
             break;
         case 0x1: //JP addr
             PC = ADR;
+            std::cout << "Jump to " << std::hex << +ADR << std::endl;
             break;
         case 0x2: //CALL addr
             SP++;
@@ -253,6 +254,44 @@ void CVM::Step(){
             break;
     }
 
+}
+void CVM::LoadTestProgram(){
+    uint8_t tank[] = {0x12,0x34,0x10,0x54,0x7C,0x6C,0x7C,0x7C,0x44,0x7C,0x7C,0x6C,0x7C,0x54,0x10,0x00,0xFC,0x78,0x6E,0x78,0xFC,0x00,0x3F,0x1E,0x76,0x1E,0x3F,0x00,0x72,0xFF,0xA2,0x02,0x00,0xEE,0x72,0x01,0xA2,0x08,0x00,0xEE,0x71,0xFF,0xA2,0x15,0x00,0xEE,0x71,0x01,0xA2,0x0F,0x00,0xEE,0x61,0x20,0x62,0x10,0xA2,0x02,0xD1,0x27,0xF0,0x0A,0xD1,0x27,0x40,0x02,0x22,0x1C,0x40,0x04,0x22,0x28,0x40,0x06,0x22,0x2E,0x40,0x08,0x22,0x22,0x12,0x3A};
+    Reset();
+    for (int i = 0; i <= (sizeof(tank)/sizeof(*tank));i++){
+        vmMemory[PC+i] = tank[i];
+    }
+}
+void CVM::Run(bool step){
+    for(int j = PC; j<= PC+50;j++){
+        std::cout << ":" << std::hex << +vmMemory[j] << std::endl;
+    }
+    while(true){
+        std::cout << "Executing bytecode: " << std::hex << +vmMemory[PC] << ":" << +vmMemory[PC+1] << std::endl;
+        Step();
+        for(int i = 0;i<=REGISTERCOUNT;i++){
+            std::cout << "Vx" << i <<": " << std::hex << +vmRegisters[i] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "PC: " << PC << std::endl;
+        std::cin.get();
+    }
+}
+void CVM::Reset(){
+    PC = 0x200;
+    int i = 0;
+    for(i = 0;i<=STACKSIZE;i++){
+        vmStack[i] = 0x0;
+    }
+    for(i = 0;i<=MEMSIZE;i++){
+        vmMemory[i] = 0x0;
+    }
+    for(i = 0;i<=REGISTERCOUNT;i++){
+        vmRegisters[i] = 0x0;
+    }
+    for(i = 0;i<=SCREENSIZEX*SCREENSIZEY;i++){
+        frameBuffer[i] = 0x0;
+    }
 }
 CVM::CVM(){
     vmStack = new uint16_t[STACKSIZE];

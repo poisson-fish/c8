@@ -10,14 +10,18 @@
 //For standardized data types
 #include <cstdint>
 #include <stdlib.h>
+#include <algorithm>
+#include <iostream>
 
 class CVM{
     public:
     CVM();
     ~CVM();
     void Step();
-    void Run();
+    void Run(bool step);
     void Pause();
+    void Reset();
+    void LoadTestProgram();
 
     private:
     //Memory

@@ -4,12 +4,12 @@
 // run with: ./hello_sdl2
 #include <SDL2/SDL.h>
 #include <stdio.h>
-
+#include <cvm.h>
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
 int main(int argc, char* args[]) {
-  SDL_Window* window = NULL;
+  /*SDL_Window* window = NULL;
   SDL_Surface* screenSurface = NULL;
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     fprintf(stderr, "could not initialize sdl2: %s\n", SDL_GetError());
@@ -30,6 +30,11 @@ int main(int argc, char* args[]) {
   SDL_UpdateWindowSurface(window);
   SDL_Delay(2000);
   SDL_DestroyWindow(window);
-  SDL_Quit();
+  SDL_Quit();*/
+
+    CVM chip8 = CVM();
+    chip8.Reset();
+    chip8.LoadTestProgram();
+    chip8.Run(true);
   return 0;
 }

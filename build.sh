@@ -1,2 +1,2 @@
 cd build
-ninja
+make
