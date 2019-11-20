@@ -1,4 +1,4 @@
 mkdir build
 cd build
-cmake .. -G "Ninja"
+cmake ..
 cp compile_commands.json ../compile_commands.json
