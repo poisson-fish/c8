@@ -10,13 +10,15 @@
 #define LONIB (LOBYTE & 0xF)
 
 void CVM::Step(){
+    drawFlag = false;
     switch(OPCODE >> 4){
         case 0x0:
             switch(LOBYTE){
                 case 0xE0: //CLS
-                    for(int x = 0;x<=SCREENSIZEX;x++)
-                        for(int y = 0;y<=SCREENSIZEY;y++)
-                            frameBuffer[INDEX(x,y)] = false;
+                    for(int i = 0;i<=SCREENSIZEX*SCREENSIZEY;i++){
+                        frameBuffer[i] = 0x0;
+                    }
+                    drawFlag = true;
                     PC+=2;
                     break;
                 case 0xEE: //RET
@@ -170,14 +172,27 @@ void CVM::Step(){
             PC+=2;
             break;
         case 0xD: //DRW Vx, Vy, nibble
-            for(int y = 0;y<=LONIB;y=y+1){
-                for(int x = 0;x<=SCREENSIZEX;x++){
-                    uint8_t result = vmMemory[I + y] ^ frameBuffer[INDEX(x,y)];
-                    bool wasCollision = (vmMemory[I+INDEX(x,y)] & frameBuffer[INDEX(x,y)]) > 0;
-
-                    memcpy
+            for(int y = 0;y<=LONIB;y++){
+                uint8_t toWrite = vmMemory[I + y];
+                uint8_t xcoord = vmRegisters[X];
+                uint8_t index_y = vmRegisters[Y]+y;
+                uint8_t index_x = (uint8_t) (xcoord / sizeof(uint8_t));
+                uint8_t index_x_mod = xcoord % sizeof(uint8_t);
+                if(index_x_mod > 0){
+                    uint8_t toWriteShiftStart = toWrite >> index_x_mod;
+                    uint8_t toWriteShiftEnd = toWrite << (sizeof(uint8_t) - index_x_mod);
+                    vmRegisters[0xF] = ((frameBuffer[INDEX(index_x,index_y)] & toWriteShiftStart) != 0)
+                                        | ((frameBuffer[INDEX(index_x+1,index_y)] & toWriteShiftEnd) != 0);
+                    frameBuffer[INDEX(index_x,index_y)] ^= toWriteShiftStart;
+                    frameBuffer[INDEX(index_x+1,index_y)] ^= toWriteShiftEnd;
                 }
-            }
+                else {
+                    vmRegisters[0xF] = (frameBuffer[INDEX(index_x,index_y)] & toWrite) != 0;
+                    frameBuffer[INDEX(index_x,index_y)] ^= toWrite;
+                }   
+                drawFlag = true;
+                    
+            } 
             PC+=2;
             break;
         case 0xE:
@@ -243,7 +258,7 @@ CVM::CVM(){
     vmStack = new uint16_t[STACKSIZE];
     vmMemory = new uint8_t[MEMSIZE];
     vmRegisters = new uint8_t[REGISTERCOUNT];
-    frameBuffer = new uint8_t[SCREENSIZEX/sizeof(uint8_t) * SCREENSIZEY];
+    frameBuffer = new uint8_t[SCREENSIZEX*SCREENSIZEY];
 }
 CVM::~CVM(){
     delete[] vmStack;
