@@ -4,8 +4,8 @@
 #define MEMSIZE 4096-1
 #define STACKSIZE 16-1
 #define REGISTERCOUNT 16-1
-#define SCREENSIZEX (64/8)-1
-#define SCREENSIZEY 32-1
+#define SCREENSIZEX ((64/8)-1)
+#define SCREENSIZEY (32-1)
 #define INDEX(x,y) (x + (SCREENSIZEX * y))
 //For standardized data types
 #include <cstdint>
