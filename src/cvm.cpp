@@ -32,7 +32,6 @@ void CVM::Step(){
             break;
         case 0x1: //JP addr
             PC = ADR;
-            std::cout << "Jump to " << std::hex << +ADR << std::endl;
             break;
         case 0x2: //CALL addr
             SP++;
@@ -174,25 +173,29 @@ void CVM::Step(){
             break;
         case 0xD: //DRW Vx, Vy, nibble
             for(int y = 0;y<=LONIB;y++){
-                uint8_t toWrite = vmMemory[I + y];
-                uint8_t xcoord = vmRegisters[X];
-                uint8_t index_y = vmRegisters[Y]+y;
-                uint8_t index_x = (uint8_t) (xcoord / sizeof(uint8_t));
-                uint8_t index_x_mod = xcoord % sizeof(uint8_t);
+                //This draw code copies sprites to the framebuffer a byte at a time, taking into account 
+                //the offset in the byte for the requested coordinate. It sets the VF register for any bits
+                //flipped to 0, implying a 'collision' as specified by the ISA.
+                uint8_t toWrite = vmMemory[I + y]; //Memory to draw to framebuffer
+                uint8_t xcoord = vmRegisters[X]; //Framebuffer X coordinate from specified register
+                uint8_t index_y = vmRegisters[Y]+y; //Framebuffer Y coordinate from specified register
+                uint8_t index_x = (uint8_t) (xcoord / sizeof(uint8_t)); //Integer part of x coordinate
+                uint8_t index_x_mod = xcoord % sizeof(uint8_t); //Modulus of x coordinate
                 if(index_x_mod > 0){
+                    //We are drawing an offset byte
                     uint8_t toWriteShiftStart = toWrite >> index_x_mod;
                     uint8_t toWriteShiftEnd = toWrite << (sizeof(uint8_t) - index_x_mod);
                     vmRegisters[0xF] = ((frameBuffer[INDEX(index_x,index_y)] & toWriteShiftStart) != 0)
-                                        | ((frameBuffer[INDEX(index_x+1,index_y)] & toWriteShiftEnd) != 0);
-                    frameBuffer[INDEX(index_x,index_y)] ^= toWriteShiftStart;
-                    frameBuffer[INDEX(index_x+1,index_y)] ^= toWriteShiftEnd;
+                                        | ((frameBuffer[INDEX(index_x+1,index_y)] & toWriteShiftEnd) != 0); //Set flag if any bits in the current or next byte are flipped to 0
+                    frameBuffer[INDEX(index_x,index_y)] ^= toWriteShiftStart; //XOR current byte over framebuffer index
+                    frameBuffer[INDEX(index_x+1,index_y)] ^= toWriteShiftEnd; //XOR next byte over next framebuffer index
                 }
                 else {
-                    vmRegisters[0xF] = (frameBuffer[INDEX(index_x,index_y)] & toWrite) != 0;
-                    frameBuffer[INDEX(index_x,index_y)] ^= toWrite;
+                    //We are drawing whole bytes at a time
+                    vmRegisters[0xF] = (frameBuffer[INDEX(index_x,index_y)] & toWrite) != 0; //Set flag for bit flips to 0 in current byte
+                    frameBuffer[INDEX(index_x,index_y)] ^= toWrite; //XOR current byte over framebuffer index
                 }   
                 drawFlag = true;
-                    
             } 
             PC+=2;
             break;
@@ -275,32 +278,21 @@ void CVM::Run(bool step){
         if(std::getchar() == 'd'){
             //Print framebuffer
             for(int y = 0; y<SCREENSIZEY;y++){
-        
-            for(int x = 0; x<SCREENSIZEX;x++){
-                std::bitset<8> bitfield(frameBuffer[INDEX(x,y)]);
-                std::cout << bitfield;
+                for(int x = 0; x<SCREENSIZEX;x++){
+                    std::bitset<8> bitfield(frameBuffer[INDEX(x,y)]);
+                    std::cout << bitfield;
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
-         }   
-            
         }
     }
 }
 void CVM::Reset(){
     PC = 0x200;
-    int i = 0;
-    for(i = 0;i<=STACKSIZE;i++){
-        vmStack[i] = 0x0;
-    }
-    for(i = 0;i<=MEMSIZE;i++){
-        vmMemory[i] = 0x0;
-    }
-    for(i = 0;i<=REGISTERCOUNT;i++){
-        vmRegisters[i] = 0x0;
-    }
-    for(i = 0;i<=SCREENSIZEX*SCREENSIZEY;i++){
-        frameBuffer[i] = 0x0;
-    }
+    std::fill(vmStack, vmStack+STACKSIZE, 0);
+    std::fill(vmMemory, vmMemory+MEMSIZE, 0);
+    std::fill(vmRegisters, vmRegisters+REGISTERCOUNT, 0);
+    std::fill(frameBuffer, frameBuffer+(SCREENSIZEX*SCREENSIZEY), 0);
 }
 CVM::CVM(){
     vmStack = new uint16_t[STACKSIZE];
