@@ -186,9 +186,9 @@ void CVM::Step(){
                     uint8_t toWriteShiftStart = toWrite >> index_x_mod;
                     uint8_t toWriteShiftEnd = toWrite << (sizeof(uint8_t) - index_x_mod);
                     vmRegisters[0xF] = ((frameBuffer[INDEX(index_x,index_y)] & toWriteShiftStart) != 0)
-                                        | ((frameBuffer[INDEX(index_x+1,index_y)] & toWriteShiftEnd) != 0); //Set flag if any bits in the current or next byte are flipped to 0
+                                        | ((frameBuffer[INDEX(index_x,index_y+1)] & toWriteShiftEnd) != 0); //Set flag if any bits in the current or next byte are flipped to 0
                     frameBuffer[INDEX(index_x,index_y)] ^= toWriteShiftStart; //XOR current byte over framebuffer index
-                    frameBuffer[INDEX(index_x+1,index_y)] ^= toWriteShiftEnd; //XOR next byte over next framebuffer index
+                    frameBuffer[INDEX(index_x,index_y+1)] ^= toWriteShiftEnd; //XOR next byte over next framebuffer index
                 }
                 else {
                     //We are drawing whole bytes at a time
