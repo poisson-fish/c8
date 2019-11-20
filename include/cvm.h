@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <iostream>
-
+#include <bitset>
 class CVM{
     public:
     CVM();
